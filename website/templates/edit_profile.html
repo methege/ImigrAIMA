@@ -1,68 +1,140 @@
 {% extends 'base.html' %}
 
+{% block title %}O Meu Perfil | ImigraÁgil{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4 text-primary fw-bold">
-        <i class="bi bi-person-circle"></i> O Meu Perfil
+<div class="container py-5 mt-3">
+    <h2 class="mb-4 text-primary fw-bold border-bottom pb-3">
+        <i class="bi bi-person-circle me-2"></i> O Meu Perfil
     </h2>
 
-    <form method="POST" class="row g-4">
+    <form method="POST" class="row g-4" novalidate>
         {% csrf_token %}
 
-        <div class="col-md-5">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Dados de Conta</h5>
+        <!-- LADO ESQUERDO: DADOS DE CONTA -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100 border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4 py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-shield-lock me-2"></i> Dados de Conta</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label text-muted">Nome de Utilizador</label>
-                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
-                        <small class="text-muted">O username não pode ser alterado.</small>
+                <div class="card-body p-4">
+                    
+                    <!-- Username (Fixo/Inalterável) -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold">Nome de Utilizador</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                            <input type="text" class="form-control bg-light text-muted" value="{{ user.username }}" disabled>
+                        </div>
+                        <div class="form-text small mt-1">O username não pode ser alterado.</div>
                     </div>
                     
+                    <!-- Loop dos Campos (Nome, Email) -->
                     {% for field in u_form %}
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label fw-bold">{{ field.label }}</label>
-                        {{ field }}
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-pencil-square text-muted"></i></span>
+                            {{ field }}
+                        </div>
                         {% if field.errors %}
-                            <div class="text-danger small">{{ field.errors }}</div>
+                            <div class="text-danger small fw-bold mt-1"><i class="bi bi-x-circle"></i> {{ field.errors|striptags }}</div>
                         {% endif %}
                     </div>
                     {% endfor %}
+                    
                 </div>
             </div>
         </div>
 
-        <div class="col-md-7">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white text-primary border-primary">
-                    <h5 class="mb-0"><i class="bi bi-passport"></i> Dados de Imigração</h5>
+        <!-- LADO DIREITO: DADOS DE IMIGRAÇÃO -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100 border-0 rounded-4">
+                <div class="card-header bg-white text-primary border-primary border-bottom-2 py-3 rounded-top-4">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-passport me-2"></i> Dados de Imigração</h5>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info py-2 small">
-                        <i class="bi bi-info-circle"></i> Estes dados serão usados automaticamente nos teus pedidos.
+                <div class="card-body p-4">
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 py-2 small mb-4">
+                        <i class="bi bi-info-circle-fill me-1"></i> Estes dados serão usados automaticamente nos teus pedidos.
                     </div>
 
-                    {% for field in p_form %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <div class="text-danger small">{{ field.errors }}</div>
-                        {% endif %}
+                    <!-- Usar uma grid interna para organizar melhor os espaços -->
+                    <div class="row g-3">
+                        {% for field in p_form %}
+                        <!-- Endereço ocupa a linha toda (col-12), os outros ocupam metade (col-md-6) -->
+                        <div class="{% if field.name == 'address' %}col-12{% else %}col-md-6{% endif %} mb-2">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            
+                            <!-- Ícones dinâmicos consoante o campo -->
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    {% if field.name == 'nif' %}<i class="bi bi-credit-card text-muted"></i>
+                                    {% elif field.name == 'passport' %}<i class="bi bi-passport text-muted"></i>
+                                    {% elif field.name == 'phone' %}<i class="bi bi-telephone text-muted"></i>
+                                    {% elif field.name == 'nationality' %}<i class="bi bi-globe-americas text-muted"></i>
+                                    {% elif field.name == 'address' %}<i class="bi bi-geo-alt text-muted"></i>
+                                    {% else %}<i class="bi bi-pencil text-muted"></i>{% endif %}
+                                </span>
+                                {{ field }}
+                            </div>
+
+                            {% if field.help_text %}
+                                <div class="form-text small">{{ field.help_text }}</div>
+                            {% endif %}
+                            
+                            <!-- Mensagens de Erro (Mostra o erro do Forms.py) -->
+                            {% if field.errors %}
+                                <div class="text-danger small fw-bold mt-1"><i class="bi bi-x-circle"></i> {{ field.errors|striptags }}</div>
+                            {% endif %}
+
+                            <!-- NOVO: Contador de caracteres e script para o campo Morada -->
+                            {% if field.name == 'address' %}
+                                <div class="text-end small text-muted mt-1 fw-bold" id="address-counter">0 / 200</div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const addressInput = document.querySelector('[name="address"]');
+                                        const counter = document.getElementById('address-counter');
+                                        
+                                        if (addressInput) {
+                                            // Encolhe a caixa visualmente para apenas 2 linhas
+                                            addressInput.setAttribute('rows', '2');
+                                            // Força o limite de teclado a 200 caracteres
+                                            addressInput.setAttribute('maxlength', '200');
+                                            
+                                            // Atualiza o contador em tempo real
+                                            counter.innerText = addressInput.value.length + ' / 200';
+                                            addressInput.addEventListener('input', function() {
+                                                counter.innerText = this.value.length + ' / 200';
+                                                
+                                                // Fica vermelho se chegar ao limite
+                                                if(this.value.length >= 200) {
+                                                    counter.classList.replace('text-muted', 'text-danger');
+                                                } else {
+                                                    counter.classList.replace('text-danger', 'text-muted');
+                                                }
+                                            });
+                                        }
+                                    });
+                                </script>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    
                 </div>
             </div>
         </div>
 
-        <div class="col-12 text-end mt-4">
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
-            <button type="submit" class="btn btn-primary btn-lg px-5">
-                <i class="bi bi-save"></i> Guardar Alterações
+        <!-- BOTÕES -->
+        <div class="col-12 text-end mt-5 border-top pt-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg rounded-pill px-4 me-3 fw-bold">
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
+                <i class="bi bi-save me-2"></i> Guardar Alterações
             </button>
         </div>
+        
     </form>
 </div>
 {% endblock %}
